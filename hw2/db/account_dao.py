@@ -4,27 +4,23 @@ import os
 from typing import List, Optional
 from exception.exceptions import EntityNotFoundException
 
-DB_PATH = 'db/data/accounts.pickle'
-
-def init():
-    if not os.path.exists(DB_PATH):
-        with open(DB_PATH, 'wb') as f:
-            pickle.dump([], f)
-
-init()
+def get_db_path():
+    return os.environ.get('ACCOUNTS_DB_PATH')
 
 def load_all() -> List[Account]:
-    with open(DB_PATH, 'rb') as f:
+    db_path = get_db_path()
+    with open(db_path, 'rb') as f:
         accounts = pickle.load(f)
         return accounts
 
 def save(account: Account):
+    db_path = get_db_path()
     accounts = load_all()
     if len(list(filter(lambda a: a.id == account.id, accounts))) > 0:
         return
 
     accounts.append(account)
-    with open(DB_PATH, 'wb') as f:
+    with open(db_path, 'wb') as f:
         pickle.dump(accounts, f)
 
 def load_by_id(id: int) -> Optional[Account]:
@@ -42,6 +38,7 @@ def load_by_owner_id(owner_id: int) -> List[Account]:
     return owner_accounts
 
 def update(account: Account):
+    db_path = get_db_path()
     accounts = load_all()
     i = None
 
@@ -54,5 +51,10 @@ def update(account: Account):
         raise EntityNotFoundException("Account with id {} doesn't exist".format(account.id))
 
     accounts[i] = account
-    with open (DB_PATH, 'wb') as f:
+    with open (db_path, 'wb') as f:
         pickle.dump(accounts, f)
+
+def delete_all():
+    db_path = get_db_path()
+    with open(db_path, 'wb') as f:
+        pickle.dump([], f)

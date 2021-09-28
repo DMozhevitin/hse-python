@@ -3,27 +3,23 @@ from model.user import User
 from typing import List, Optional
 import os
 
-DB_PATH = 'db/data/users.pickle'
-
-def init():
-    if not os.path.exists(DB_PATH):
-        with open(DB_PATH, 'wb') as f:
-            pickle.dump([], f)
-
-init()
+def get_db_path():
+    return os.environ.get('USERS_DB_PATH')
 
 def load_all() -> List[User]:
-    with open(DB_PATH, 'rb') as f:
+    db_path = get_db_path()
+    with open(db_path, 'rb') as f:
         users = pickle.load(f)
         return users
 
 def save(user: User):
+    db_path = get_db_path()
     users = load_all()
     if len(list(filter(lambda u: u.id == user.id, users))) > 0:
         return
 
     users.append(user)
-    with open(DB_PATH, 'wb') as f:
+    with open(db_path, 'wb') as f:
         pickle.dump(users, f)
 
 def load_by_id(id: int) -> Optional[User]:
@@ -33,3 +29,8 @@ def load_by_id(id: int) -> Optional[User]:
         return lst[0]
     else:
         return None
+
+def delete_all():
+    db_path = get_db_path()
+    with open(db_path, 'wb') as f:
+        pickle.dump([], f)

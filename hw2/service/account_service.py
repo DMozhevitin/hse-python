@@ -1,5 +1,5 @@
 from model.account import Account
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from exception.exceptions import EntityNotFoundException, IllegalArgumentException
 from db import account_dao
 from service import payment_comission_service
@@ -24,22 +24,22 @@ def unsafe_get_account_by_id(id: int) -> Account:
 def get_all() -> List[Account]:
     return account_dao.load_all()
 
-def refill(account_id: int, amount: float):
+def refill(account_id: int, amount: float) -> Account:
     check_positive_amount(amount)
     account = unsafe_get_account_by_id(account_id)
-
     account.balance += amount
     account_dao.update(account)
+    return account
 
-def withdraw(account_id: int, amount: float):
+def withdraw(account_id: int, amount: float) -> Account:
     check_positive_amount(amount)
     account = unsafe_get_account_by_id(account_id)
     check_enough_balance(account, amount)
     account.balance -= amount
     account_dao.update(account)
+    return account
 
-
-def transfer(from_id: int, to_id: int, amount: float):
+def transfer(from_id: int, to_id: int, amount: float) -> Tuple[Account, Account]:
     if from_id == to_id:
         raise IllegalArgumentException('Sender and receiver ids must be different')
     check_positive_amount(amount)
@@ -50,8 +50,9 @@ def transfer(from_id: int, to_id: int, amount: float):
         raise IllegalArgumentException(
             'Transfers between accounts with different currency types are prohibited')
 
-    amount_with_comission = payment_comission_service.calculate_comission(amount)
-    from_acc.balance -= amount_with_comission
-    to_acc.balance += amount_with_comission
+    from_acc.balance -= amount
+    to_acc.balance += (amount - payment_comission_service.calculate_comission(amount))
     account_dao.update(from_acc)
     account_dao.update(to_acc)
+
+    return (from_acc, to_acc)
