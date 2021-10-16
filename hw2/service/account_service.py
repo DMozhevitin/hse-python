@@ -15,6 +15,9 @@ def check_enough_balance(account: int, amount: float):
 def get_account_by_id(id: int)-> Optional[Account]:
    return account_dao.load_by_id(id)
 
+def get_accounts_by_owner_id(owner_id: int) -> List[Account]:
+    return list(filter(lambda acc: acc.owner_id == owner_id, account_dao.load_all()))
+
 def unsafe_get_account_by_id(id: int) -> Account:
     account = get_account_by_id(id)
     if account is None:
